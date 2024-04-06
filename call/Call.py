@@ -51,7 +51,11 @@ class Call:
                 if packet['event'] == 'start':
                     print("Streaming starting:")
                 elif packet['event'] == 'stop':
+
                     print('\nStreaming has stopped')
+                    self.flaskThread.terminate()
+                    self.flaskThread.join()
+                    sleep(1)
                     ngrok.disconnect(self.public_url)
                     return
 
@@ -86,8 +90,8 @@ class Call:
         #self.number.update(voice_url=self.public_url + '/call')
         #print(f"Waiting for calls on {self.number.phone_number}")
 
-        flskThrd = threading.Thread(target=self.flaskThread, args=[])
-        flskThrd.start()
+        self.flskThrd = threading.Thread(target=self.flaskThread, args=[])
+        self.flskThrd.start()
         sleep(5)
         self.call()
         
