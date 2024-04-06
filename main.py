@@ -63,7 +63,7 @@ def numFormat(phoneNumber):
 				formattedNum += x
 	return formattedNum
 
-def newClient(clientsocket):
+def newClient(clientsocket, port):
 
 	maxCallTime = 60
 	
@@ -127,7 +127,7 @@ def newClient(clientsocket):
 	# sleep(1)
 
 
-	callThread = threading.Thread(target=Call, args=(defaultNumber, outboundMsg, inboundMsg, outboundLock, inboundLock, maxCallTime))
+	callThread = threading.Thread(target=Call, args=(defaultNumber, outboundMsg, inboundMsg, outboundLock, inboundLock, port, maxCallTime))
 	callThread.start()
 
 	init_time = perf_counter()
@@ -184,6 +184,9 @@ def newClient(clientsocket):
 
 
 def startServer():
+
+	portList = [ i for i in range(4950, 4980)]
+
 	serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	serverSocket.bind(('localhost', 9999))
 	serverSocket.listen(5)
@@ -193,7 +196,7 @@ def startServer():
 		clientsocket, clientaddress = serverSocket.accept()
 		print(f"Connection from {clientaddress} established.")
 
-		clientThread = threading.Thread(target=newClient, args = (clientsocket,))
+		clientThread = threading.Thread(target=newClient, args = (clientsocket,portList.pop(0)))
 		clientThread.start()
 		print("Client Thread Started")
 

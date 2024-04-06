@@ -21,7 +21,7 @@ from time import sleep, perf_counter
 class Call:
     
     # inbound and outbound msgs are manager.list
-    def __init__(self, outboundNumber: str, inboundMsgs, outboundMsgs, inboundLock, outboundLock, maxCallTime = 60):
+    def __init__(self, outboundNumber: str, inboundMsgs, outboundMsgs, inboundLock, outboundLock, port, maxCallTime = 60):
         self.outboundNumber = outboundNumber
 
         self.app = Flask(__name__)
@@ -53,7 +53,7 @@ class Call:
                 elif packet['event'] == 'stop':
 
                     print('\nStreaming has stopped')
-                    request.get(f"{self.public_url}/shutdown")
+                    #request.get(f"{self.public_url}/shutdown")
                     sleep(1)
                     ngrok.disconnect(self.public_url)
                     return
@@ -73,7 +73,7 @@ class Call:
                     #     r = json.loads(rec.PartialResult())
                     #     print(CL + r['partial'] + BS * len(r['partial']), end='', flush=True)
                 
-        @self.app.get('/shutdown')
+        @self.app.route('/shutdown', methods=['POST'])
         def shutdown():
             self.shutdownFlask()
         
@@ -84,7 +84,7 @@ class Call:
             myssl.verify_mode=ssl.CERT_NONE
             installer.install_ngrok(conf.get_default().ngrok_path, context=myssl)
 
-        self.port = 4998
+        self.port = port
         self.public_url = ngrok.connect(self.port, bind_tls=True).public_url
     
         self.number = self.twilio_client.incoming_phone_numbers.list()[0]
