@@ -53,7 +53,7 @@ class Call:
                 elif packet['event'] == 'stop':
 
                     print('\nStreaming has stopped')
-                    self.flaskThread.terminate()
+                    self.shutdownFlask()
                     self.flaskThread.join()
                     sleep(1)
                     ngrok.disconnect(self.public_url)
@@ -74,7 +74,9 @@ class Call:
                     #     r = json.loads(rec.PartialResult())
                     #     print(CL + r['partial'] + BS * len(r['partial']), end='', flush=True)
                 
-
+        @self.app.get('/shutdown')
+        def shutdown():
+            self.shutdownFlask()
         
         
         if not os.path.exists(conf.get_default().ngrok_path):
@@ -97,6 +99,14 @@ class Call:
         
     def flaskThread(self):
         self.app.run(port=self.port)
+
+    def shutdownFlask():
+        func = request.environ.get('werkzeug.server.shutdown')
+        if func is None:
+            return
+        func()
+
+        print("Flask server shutdown")
 
     def call(self):
         print(f"Making outbound call to: {self.outboundNumber}")
@@ -134,12 +144,20 @@ class Call:
                     print(call.sid)
                     call = self.twilio_client.calls(str(call.sid)).update(twiml=response)
 
+
             sleep(2)
                     
                     
-        
+        response = VoiceResponse()
+        response.hangup()
+        response = str(response)
+        response = response[response.find('>') + 1:]
+        print(call.sid)
+        call = self.twilio_client.calls(str(call.sid)).update(twiml=response)
 
-        sleep(60)
+
+
+        
     
 
 

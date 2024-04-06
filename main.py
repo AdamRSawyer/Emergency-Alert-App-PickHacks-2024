@@ -16,6 +16,8 @@ MONGODB_URI = "mongodb+srv://SK:PickHacks@pickhacks.s50jyfl.mongodb.net/?retryWr
 DB_NAME = "messages"
 COLLECTION_NAME = "messages"
 
+
+
 db_lock = Lock()
 apikey = 'AIzaSyAvEcUwJvMn0mXPBx1g66Xlu-QCLI5OmB0'
 
