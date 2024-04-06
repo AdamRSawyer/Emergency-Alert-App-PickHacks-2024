@@ -188,7 +188,7 @@ def startServer():
 	portList = [ i for i in range(4950, 4980)]
 
 	serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	serverSocket.bind(('localhost', 9999))
+	serverSocket.bind(('localhost', 4760))
 	serverSocket.listen(5)
 	print("Server started. Waiting for connections...")
 

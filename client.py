@@ -17,8 +17,8 @@ def sendMessage(message, clientSocket):
 
 if __name__ == "__main__":
 
-	serverAddress = 'localhost'
-	serverPort = 9999
+	serverAddress = '10.106.63.188'
+	serverPort = 4760
 	clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	clientsocket.connect((serverAddress, serverPort))
 
