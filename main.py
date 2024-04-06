@@ -8,6 +8,8 @@ import multiprocessing as mp
 from pymongo import MongoClient
 from queue import Queue
 from threading import Lock
+from call.Call import *
+import ssl
 
 
 MONGODB_URI = "mongodb+srv://SK:PickHacks@pickhacks.s50jyfl.mongodb.net/?retryWrites=true&w=majority&appName=PickHacks"
@@ -60,12 +62,22 @@ def numFormat(phoneNumber):
 	return formattedNum
 
 def newClient(clientsocket):
-	client = MongoClient(MONGODB_URI)
+
+	maxCallTime = 60
+	
+	client = MongoClient(MONGODB_URI, tlsInsecure=True)
 	db = client[DB_NAME]
-	while True:
+
+	namesend, receivedsend, stationID, stationNum, stationName, numsend = None, [], None, None, None, None
+
+	alertMsgRcvd = False
+	while not alertMsgRcvd:
 		data = clientsocket.recv(1024)
 		if not data:
 			break
+
+		alertMsgRcvd = True
+			
 		s = struct.unpack("I128cff", data[0:140])
 		name = s[1: 129]
 		lat = float(s[129])
@@ -74,39 +86,79 @@ def newClient(clientsocket):
 		if (s[0] - 140 > 0):
 			received = struct.unpack(f"{s[0] - 140}c", data[140:])
 		namesend = listConvert(name)
-		receivedsend = listConvert(received)
+		receivedsend.append(listConvert(received))
 		stationID = policeLocation(lat, log, apikey)
 		stationNum, stationName = policeDetails(stationID, apikey)
 		numsend = numFormat(stationNum)
 
-		outboundLock = threading.Lock()
-		outboundMsg = mp.list() 
+	mngr = mp.Manager()
 
-		inboundLock = threading.Lock()
-		inboundMsg = mp.list()
+	outboundLock = threading.Lock()
+	outboundMsg = mngr.list([]) 
+
+	inboundLock = threading.Lock()
+	inboundMsg = mngr.list([])
 
 
-		inboundMsg = f"Emergency Call from Alert App: Name is {namesend} Location: {lat} latitude and {log} longitude. Communicate with me and messaged will be transcribed to user"
+	outboundMsg.append(f"Emergency Call from Alert App: Name is {namesend} Location: {lat} latitude and {log} longitude. Communicate with me and messaged will be transcribed to user")
 
-		print(f"Received message from {namesend}: ")
-		callThread = threading.Thread(target=Call, args=(numsend, inboundMsg, outboundMsg, inboundLock, outboundLock))
-		callThread.start()
+	print(f"Received message from {namesend}: ")
 
-		while db_lock.locked():
-			time.sleep(0.001)
-		with db_lock:
-			collection = db[COLLECTION_NAME]
-			messageData = {
-				"Name: ": namesend,
-				"Latitude: ": lat,
-				"Longitude: ": log,
-				"Alert Message: ": receivedsend,
-				"Nearest Station Name: ": stationName,
-				"Nearest Station Phone Number: ": numsend
-			}
-			collection.insert_one(messageData)
-			print("Data in MongoDB")
+	defaultNumber = "+15733032511"
 
+	while db_lock.locked():
+		time.sleep(0.001)
+	with db_lock:
+		collection = db[COLLECTION_NAME]
+		messageData = {
+			"Name: ": namesend,
+			"Latitude: ": lat,
+			"Longitude: ": log,
+			"Alert Message: ": receivedsend,
+			"Nearest Station Name: ": stationName,
+			"Nearest Station Phone Number: ": numsend
+		}
+		print(f"Stuck in collection insertion")
+		collection.insert_one(messageData)
+		print("Data in MongoDB")
+
+	sleep(1)
+
+
+	callThread = threading.Thread(target=Call, args=(defaultNumber, outboundMsg, inboundMsg, outboundLock, inboundLock, maxCallTime))
+	callThread.start()
+
+	init_time = perf_counter()
+	while perf_counter() - init_time > maxCallTime:
+		data = clientsocket.recv(1024)
+		
+		if data:
+			s = struct.unpack("I128cff", data[0:140])
+			received = " "
+			if (s[0] - 140 > 0):
+				received = struct.unpack(f"{s[0] - 140}c", data[140:])
+			namesend = listConvert(name)
+			received = listConvert(received)
+			receivedsend.append(received)
+
+			while outboundLock.locked():
+				sleep(0.001)
+			with outboundLock:
+				outboundMsg.append(received)
+				print(f"Main Thread Outbound Msgs:\n{outboundMsg}")
+		
+		if len(inboundMsg) > 0:
+			while inboundLock.locked():
+				sleep(0.001)
+			with inboundLock:
+				rcvdMessage = ''.join([i for i in inboundMsg])
+				inboundMsg[:] = []
+
+			print(f"Main Thread Cur Inbound Msg:\n{rcvdMessage}")
+			# TO DO: Send rcvdMessaged to client
+
+			sleep(2)
+	
 	clientsocket.close()
 
 def startServer():

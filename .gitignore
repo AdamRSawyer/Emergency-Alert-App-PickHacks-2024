@@ -4,3 +4,6 @@ lib/*
 .DS_Store
 .vscode/*
 call/.DS_Store
+__pycache__/*
+call/__pycache__/*
+callTesting/__pycache__/*
