@@ -100,7 +100,7 @@ class Call:
     def flaskThread(self):
         self.app.run(port=self.port)
 
-    def shutdownFlask():
+    def shutdownFlask(self):
         func = request.environ.get('werkzeug.server.shutdown')
         if func is None:
             return
