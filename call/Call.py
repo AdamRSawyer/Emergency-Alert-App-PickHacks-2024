@@ -52,6 +52,9 @@ class Call:
                     print("Streaming starting:")
                 elif packet['event'] == 'stop':
                     print('\nStreaming has stopped')
+                    ngrok.disconnect(self.public_url)
+                    return
+
                 elif packet['event'] == 'media':
                     audio = base64.b64decode(packet['media']['payload'])
                     audio = audioop.ulaw2lin(audio, 2)
