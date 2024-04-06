@@ -53,8 +53,7 @@ class Call:
                 elif packet['event'] == 'stop':
 
                     print('\nStreaming has stopped')
-                    self.shutdownFlask()
-                    self.flaskThread.join()
+                    request.get(f"{self.public_url}/shutdown")
                     sleep(1)
                     ngrok.disconnect(self.public_url)
                     return
