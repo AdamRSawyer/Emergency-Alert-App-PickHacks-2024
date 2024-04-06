@@ -129,7 +129,7 @@ def newClient(clientsocket):
 	callThread.start()
 
 	init_time = perf_counter()
-	while perf_counter() - init_time > maxCallTime:
+	while perf_counter() - init_time < maxCallTime:
 		data = clientsocket.recv(1024)
 		
 		if data:
@@ -146,16 +146,18 @@ def newClient(clientsocket):
 			with outboundLock:
 				outboundMsg.append(received)
 				print(f"Main Thread Outbound Msgs:\n{outboundMsg}")
-		
-		if len(inboundMsg) > 0:
-			while inboundLock.locked():
-				sleep(0.001)
-			with inboundLock:
-				rcvdMessage = ''.join([i for i in inboundMsg])
-				inboundMsg[:] = []
 
-			print(f"Main Thread Cur Inbound Msg:\n{rcvdMessage}")
-			# TO DO: Send rcvdMessaged to client
+			#print(f'Arrived at inbound')
+			rcvdMessage = None
+			if len(inboundMsg) > 0:
+				while inboundLock.locked():
+					sleep(0.001)
+				with inboundLock:
+					rcvdMessage = ''.join([i for i in inboundMsg])
+					inboundMsg[:] = []
+
+			if (rcvdMessage != None):
+				print(f"Main Thread Cur Inbound Msg:\n{rcvdMessage}")
 
 			sleep(2)
 	
