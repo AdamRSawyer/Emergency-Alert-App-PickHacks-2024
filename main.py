@@ -106,23 +106,23 @@ def newClient(clientsocket):
 
 	defaultNumber = "+15733032511"
 
-	while db_lock.locked():
-		time.sleep(0.001)
-	with db_lock:
-		collection = db[COLLECTION_NAME]
-		messageData = {
-			"Name: ": namesend,
-			"Latitude: ": lat,
-			"Longitude: ": log,
-			"Alert Message: ": receivedsend,
-			"Nearest Station Name: ": stationName,
-			"Nearest Station Phone Number: ": numsend
-		}
-		print(f"Stuck in collection insertion")
-		collection.insert_one(messageData)
-		print("Data in MongoDB")
+	# while db_lock.locked():
+	# 	time.sleep(0.001)
+	# with db_lock:
+	# 	collection = db[COLLECTION_NAME]
+	# 	messageData = {
+	# 		"Name: ": namesend,
+	# 		"Latitude: ": lat,
+	# 		"Longitude: ": log,
+	# 		"Alert Message: ": receivedsend,
+	# 		"Nearest Station Name: ": stationName,
+	# 		"Nearest Station Phone Number: ": numsend
+	# 	}
+	# 	print(f"Stuck in collection insertion")
+	# 	collection.insert_one(messageData)
+	# 	print("Data in MongoDB")
 
-	sleep(1)
+	# sleep(1)
 
 
 	callThread = threading.Thread(target=Call, args=(defaultNumber, outboundMsg, inboundMsg, outboundLock, inboundLock, maxCallTime))
@@ -157,11 +157,29 @@ def newClient(clientsocket):
 					inboundMsg[:] = []
 
 			if (rcvdMessage != None):
+				receivedsend.append(rcvdMessage)
 				print(f"Main Thread Cur Inbound Msg:\n{rcvdMessage}")
 
 			sleep(2)
 	
 	clientsocket.close()
+
+	while db_lock.locked():
+		time.sleep(0.001)
+	with db_lock:
+		collection = db[COLLECTION_NAME]
+		messageData = {
+			"Name: ": namesend,
+			"Latitude: ": lat,
+			"Longitude: ": log,
+			"Alert Message: ": receivedsend,
+			"Nearest Station Name: ": stationName,
+			"Nearest Station Phone Number: ": numsend
+		}
+		print(f"Stuck in collection insertion")
+		collection.insert_one(messageData)
+		print("Data in MongoDB")
+
 
 def startServer():
 	serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
