@@ -80,10 +80,10 @@ def newClient(clientsocket):
 		numsend = numFormat(stationNum)
 
 		outboundLock = threading.Lock()
-		outboundMsg = 
-		
+		outboundMsg = mp.list() 
+
 		inboundLock = threading.Lock()
-		inboundMsg = 
+		inboundMsg = mp.list()
 
 
 		inboundMsg = f"Emergency Call from Alert App: Name is {namesend} Location: {lat} latitude and {log} longitude. Communicate with me and messaged will be transcribed to user"
