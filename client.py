@@ -33,6 +33,12 @@ if __name__ == "__main__":
 	message = Message(senderVal1, senderVal2, senderVal3, senderVal4)
 
 	while perf_counter() - initTime < maxClientTime:
+		data = clientsocket.recv(1024)
+		if data:
+			s = struct.unpack('I', data[0])
+			msg = struct.unpack(f'{s[0]}c', data[1:])
+			msg = ''.join(msg)
+			print(msg)
 		sendMessage(message, clientsocket)
 		sleep(5)
 

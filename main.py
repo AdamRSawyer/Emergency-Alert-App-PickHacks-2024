@@ -159,6 +159,12 @@ def newClient(clientsocket, port):
 					inboundMsg[:] = []
 
 			if (rcvdMessage != None):
+				rcvdMessageByte = [*rcvdMessage]
+				rcvdMessageByte = [char.encode("utf-8") for char in rcvdMessageByte]
+
+				msgSize = len(rcvdMessage)+4
+				msg = struct.pack(f"I{msgSize - 4}c", msgSize, *rcvdMessageByte)
+				clientsocket.send(msg)
 				receivedsend.append(rcvdMessage)
 				print(f"Main Thread Cur Inbound Msg:\n{rcvdMessage}")
 
@@ -188,7 +194,7 @@ def startServer():
 	portList = [ i for i in range(4950, 4980)]
 
 	serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	serverSocket.bind(('10.106.63.188', 4760))
+	serverSocket.bind(('172.28.39.248', 4760))
 	serverSocket.listen(5)
 	print("Server started. Waiting for connections...")
 
