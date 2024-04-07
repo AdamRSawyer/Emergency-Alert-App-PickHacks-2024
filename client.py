@@ -4,6 +4,9 @@ import socket
 import struct
 from message import Message
 from time import perf_counter, sleep
+import fcntl, os
+import errno
+import sys
 
 def sendMessage(message, clientSocket):
 	messageSize = len(message.Extra) + 140
@@ -21,6 +24,8 @@ if __name__ == "__main__":
 	serverPort = 4760
 	clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	clientsocket.connect((serverAddress, serverPort))
+	clientsocket.setblocking(0)
+	clientsocket.settimeout(1)
 
 	senderVal1 = input("Enter Name: ")
 	senderVal2 = input("Enter Latitude: ")
@@ -33,11 +38,20 @@ if __name__ == "__main__":
 	message = Message(senderVal1, senderVal2, senderVal3, senderVal4)
 
 	while perf_counter() - initTime < maxClientTime:
-		data = clientsocket.recv(1024)
+		data = False
+		try:
+			data = clientsocket.recv(1024)
+		except socket.timeout as e:
+			err = e.args[0]
+		except socket.error as e:
+			print(e)
+			sys.exit(1)
+		
+				
 		if data:
-			s = struct.unpack('I', data[0])
-			msg = struct.unpack(f'{s[0]}c', data[1:])
-			msg = ''.join(msg)
+			s = struct.unpack('I', data[0:4])
+			msg = struct.unpack(f'{s[0] - 4}c', data[4:])
+			msg = b''.join(msg).decode('utf-8')
 			print(msg)
 		sendMessage(message, clientsocket)
 		sleep(5)

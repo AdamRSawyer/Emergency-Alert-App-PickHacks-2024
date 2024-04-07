@@ -27,7 +27,7 @@ class Call:
         self.app = Flask(__name__)
         self.sock = Sock(self.app)
         self.twilio_client = Client()
-        self.model = vosk.Model("./call/voice-model")
+        self.model = vosk.Model("./call/voice-model-medium")
 
         self.maxCallTime = maxCallTime
 
